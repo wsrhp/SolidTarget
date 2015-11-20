@@ -62,24 +62,31 @@ class DetectorConstruction : public G4VUserDetectorConstruction
   public:
   
      const
-     G4VPhysicalVolume* GetWorld()      {return physiWorld;};
+     G4VPhysicalVolume* GetWorld()      {return WorldPhys;}
                     
-     G4double           GetSize()       {return targetsizez;};
-     G4Material*        GetMaterial()   {return targetMaterial;};
+    G4double           GetSize()       {return Si_z;}
+     G4Material*        GetMaterial()   {return targetMaterial;}
      
      void               PrintParameters();
                        
   private:
-     G4VPhysicalVolume * physiWorld;
-     G4VPhysicalVolume*    physitarget;
-     G4LogicalVolume*      logictarget;
+     
+     G4VPhysicalVolume * WorldPhys;
+ 
      
      G4double                worldR;
 
-     G4double              targetsizex;
-     G4double              targetsizey;
-     G4double              targetsizez;
-
+     G4double             Si_x;
+     G4double             Si_y;
+     G4double              Si_z;
+     
+     G4double             Ag_x;
+     G4double             Ag_y;
+     G4double             Ag_z;
+     
+     
+     G4Material*           Si;
+     G4Material*            Ag ;
      G4Material*           targetMaterial;
      G4Material*            Air ;
      G4Material*            vacuum;

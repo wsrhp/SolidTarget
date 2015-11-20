@@ -62,44 +62,30 @@ void PrimaryGeneratorAction::InitializeGPS()
     //以下所有的GPS信息均可以通过gps.mac文件改变的。只是初始化这样而已。
     // particle type
   G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
-  G4ParticleDefinition* pion = particleTable->FindParticle("e-");
+  G4ParticleDefinition* pion = particleTable->FindParticle("gamma");
   gps->GetCurrentSource()->SetParticleDefinition(pion);
 
   // set energy distribution
   G4SPSEneDistribution *eneDist = gps->GetCurrentSource()->GetEneDist() ;
   eneDist->SetEnergyDisType("Mono"); // or gauss
-  eneDist->SetMonoEnergy(500.0*keV);
+  eneDist->SetMonoEnergy(50.0*keV);
 
   // set position distribution
-  /*
   G4double halfSize = 0.5*(fDetector->GetSize());
-  G4double z0 =  halfSize;
+  G4double z0 = halfSize;
   G4double x0 = 0.0*mm;
   G4double y0 = 0.0*mm;
   G4SPSPosDistribution *posDist = gps->GetCurrentSource()->GetPosDist();
   posDist->SetPosDisType("Beam");  // or Point,Plane,Volume,Beam
   posDist->SetCentreCoords(G4ThreeVector(x0,y0,z0));
-  posDist->SetBeamSigmaInX(0.1*mm);
-  posDist->SetBeamSigmaInY(0.1*mm);
-*/
-
-  G4double z0 = 1.0*mm;
-  G4double x0 = 0.0*um;
-  G4double y0 = 0.0*um;
-  G4SPSPosDistribution *posDist = gps->GetCurrentSource()->GetPosDist();
-  posDist->SetPosDisType("Plane");  // or Point,Plane,Volume,Beam
-  posDist->SetCentreCoords(G4ThreeVector(x0,y0,z0));
-  posDist->SetPosDisShape("Circle");
-  posDist->SetRadius(0.1*mm);
-  posDist->SetBeamSigmaInR(0.0*mm);
-
+  posDist->SetBeamSigmaInX(0.1*um);
+  posDist->SetBeamSigmaInY(0.1*um);
 
   // set angular distribution
   G4SPSAngDistribution *angDist = gps->GetCurrentSource()->GetAngDist();
   angDist->SetParticleMomentumDirection( G4ThreeVector(0., 0., -1.) );
-  /*angDist->SetAngDistType("beam2d");
-  angDist->SetBeamSigmaInAngX(0.1*mrad);
-  angDist->SetBeamSigmaInAngY(0.1*mrad);
-  angDist->DefineAngRefAxes("angref1",G4ThreeVector(1.,0.,0.));
-  */
+  angDist->SetAngDistType("beam2d");
+  angDist->SetBeamSigmaInAngX(0.0*mrad);
+  angDist->SetBeamSigmaInAngY(0.0*mrad);
+ // angDist->DefineAngRefAxes("angref1",G4ThreeVector(1.,0.,0.));
 }

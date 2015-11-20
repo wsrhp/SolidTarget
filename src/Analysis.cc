@@ -2,15 +2,12 @@
 #include "G4Timer.hh"
 
 #include "Analysis.hh"
-#include <stdlib.h>
-#include <iostream>
-#include<iomanip>
-#include <fstream>
 
 #include "G4ParticleDefinition.hh"
 #include "G4Track.hh"
 #include "G4Event.hh"
 #include "G4Run.hh"
+#include "G4Step.hh"
 #include "G4Gamma.hh"
 #include "G4Electron.hh"
 #include "G4Positron.hh"
@@ -18,20 +15,24 @@
 #include "G4THitsMap.hh"
 #include "G4HCofThisEvent.hh"
 #include "G4ProductionCuts.hh"
-#include "G4VProcess.hh"
+#include "G4StepPoint.hh"
 
 #include "G4UnitsTable.hh"
 #include "G4SystemOfUnits.hh"
+
 #ifdef G4ANALYSIS_USE_ROOT
 #include "TROOT.h"
 #include "TFile.h"
 #include "TTree.h"
 #endif
 
+#include <iostream>
+#include <fstream>
+
 using namespace std;
 
 Analysis* Analysis::singleton = 0;
-//控制Analysis起作用的一个静态变量
+//控制Analysis起作用的一个静态变量,判断是否是初次使用，确保只有一个实例。
 //Analysis是一个单例类
 
 Analysis* Analysis::GetInstance()
@@ -48,7 +49,6 @@ Analysis* Analysis::GetInstance()
 Analysis::Analysis() 
 {
     //一定注意啦！要对各个成员数据进行初始化！！！！
-    //TotalEnergy = 0;
     myROOTfile = 0;
      pelectree =0;
      pgamatree=0;
@@ -64,7 +64,7 @@ Analysis::Analysis()
     dataout[0] = false;
     dataout[1] = false;
     dataout[2] = true;
-    dataout[3] = false;  //需要修改这里的布尔值，确定每次保存gamma还是e-或e+
+    dataout[3] = false;
 
 }
 
@@ -111,35 +111,54 @@ void Analysis::BeginOfRun(const G4Run* aRun )
 #endif
 }
 
-void Analysis::StepAction(const G4Step* astep, const G4StepPoint* endPoint)
-{
+void Analysis::StepAction(const G4Step* astep)
+{    //save information to txt
+    G4Track* track         =  astep->GetTrack();
+    if(track->GetTrackStatus()!=fAlive) { return; }//
+    
+    //step统计某角度出射gamma
+// get volume of the current step
+   const G4StepPoint* pre = astep->GetPreStepPoint();
+   const G4StepPoint* post = astep->GetPostStepPoint();
+  
+   G4String volPre = pre->GetPhysicalVolume()->GetName();
+   G4String volPost = post->GetPhysicalVolume()->GetName();
+   
+    G4String  particlename=  track->GetParticleDefinition()->GetParticleName();//得到粒子名称
+    G4double KineticE = post->GetKineticEnergy()/keV;//得到粒子动能
+    G4ThreeVector momentumdirection = post->GetMomentumDirection();//得到粒子动量方向
+   
+    G4ThreeVector position = post->GetPosition();
+	G4double dx = position.getX(); 
+   G4double dy = position.getY();
+    G4double dz = position.getZ(); 
+ 
+    G4double a = momentumdirection.getX();
+    G4double b = momentumdirection.getY();
+    G4double c = momentumdirection.getZ();  
+             
+    particledata[0] = KineticE;
+    particledata[1] = a;
+    particledata[2] = b;
+    particledata[3] = c;
+    
+    
     // save information to ROOT
 #ifdef G4ANALYSIS_USE_ROOT
-    G4Track* track         =  astep->GetTrack();
-    G4String  particlename=  track->GetParticleDefinition()->GetParticleName();//得到粒子名称
 
-
-    particledata[0] = endPoint->GetKineticEnergy()/(1.0*keV);//得到粒子动能
-  //  particledata[0] = endPoint->GetKineticEnergy()/1.0*MeV;//得到粒子动能
-    G4ThreeVector direction = endPoint->GetMomentumDirection();//得到粒子动量方向
-    particledata[1] = direction.x();
-    particledata[2] = direction.y();
-    particledata[3] = direction.z();
-    if (track->GetParentID() == 0){
+      if (track->GetParentID() == 0){
         if(particlename=="gamma" && dataout[0]){   pgamatree->Fill(); }
-        if(particlename=="e-" && dataout[1]){
-            //TotalEnergy += particledata[0];
-            pelectree->Fill();}
+        if(particlename=="e-" && dataout[1]){  pelectree->Fill();}
     }
     else
     {
-        //G4String  process = track->GetCreatorProcess()->GetProcessName();//得到此轨道产生的物理过程
-        //ofstream ofile("process.txt",ios_base::out);
-        //ofile<<process<<"\t"<<endl;
-        if(particlename=="gamma" && dataout[2]){ sgamatree->Fill();}
-        if(particlename=="e-"&& dataout[3]){  selectree->Fill();}
+        if(particlename=="gamma" && dataout[2] && (volPre=="AgLayer" && volPost=="SiLayer")){  sgamatree->Fill();}
+        if(particlename=="e-" && dataout[3] && (volPre=="SiLayer" && volPost=="AgLayer")){  selectree->Fill();}
     }
 #endif
+  
+ 
+ 
 }
 
 void Analysis::EndOfEvent(const G4Event* /*anEvent*/)
@@ -160,11 +179,9 @@ void Analysis::EndOfEvent(const G4Event* /*anEvent*/)
             G4cout << "ROOT: files writing  " <<percentOfEvent<<" %"<< G4endl;
             myROOTfile->Write();
 #endif
-            percentOfEvent+=10;   //这个不能改成20，会出现只运行90%事例数的bug
-            //另外曾出现数目超过21474836后显示进度失效，因为需将numOfEventnow和numOfEventtotal设为G4long
+            percentOfEvent+=20;
         }
     }
-
 }
 
 void Analysis::EndOfRun(const G4Run* /*aRun*/)
@@ -177,8 +194,6 @@ void Analysis::EndOfRun(const G4Run* /*aRun*/)
     myROOTfile->Close();
     delete myROOTfile;
 #endif
-    //ofstream ofile("TotalEnergy.txt",ios_base::out);
-    //ofile<<"Total Energy:"<<TotalEnergy<<"keV"<<endl;
 
     time_t timeend;
     struct tm* tmend;
@@ -191,7 +206,7 @@ void Analysis::EndOfRun(const G4Run* /*aRun*/)
 void Analysis::ReportRunTime(G4int percent)
 {
     //利用C++中的时间函数得到程序运行至某percent of events 的时间和剩余时间
-    if(percent<0 ||percent>100)
+    if(percent<=0 &&percent>=100)
     {
         G4cout<<"Error in Analysis::ReportRunTime(): illegal input"<<G4endl;
         return;

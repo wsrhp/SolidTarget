@@ -25,10 +25,11 @@ class Analysis
 public:
     //好方法，通过定义一个静态的analysis对象，让整个程序的分析都在这个对象的调用下实现！
     //妈妈再也不用担心局部变量的问题啦！
+    //wsrhp:感觉是不是其实除了GetInstance()，其他都应该放到private里啊，不过先不管了
     static Analysis* GetInstance();
     ~Analysis();
     Analysis();
-    void StepAction(const G4Step* astep, const G4StepPoint *endPoint);
+    void StepAction(const G4Step* astep);
     void BeginOfEvent();
     void EndOfEvent(const G4Event* anEvent);
     void BeginOfRun(const G4Run* aRun);
@@ -49,12 +50,11 @@ private:
     struct tm tmstart;
     char timebuf[80];
 
-    G4long numOfEventnow;
-    G4long numOfEventtotal;
+    G4int numOfEventnow;
+    G4int numOfEventtotal;
     G4int percentOfEvent;//目前运行了多少百分比的event，以%为单位
 
     // ROOT objects
-    G4double  TotalEnergy;
     G4String  RootfileName;
     TFile*        myROOTfile;
 //    TTree*     spectrumtree;
