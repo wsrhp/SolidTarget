@@ -50,8 +50,8 @@ private:
     struct tm tmstart;
     char timebuf[80];
 
-    G4int numOfEventnow;
-    G4int numOfEventtotal;
+    G4long numOfEventnow;
+    G4long numOfEventtotal;
     G4int percentOfEvent;//目前运行了多少百分比的event，以%为单位
 
     // ROOT objects

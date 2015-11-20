@@ -179,7 +179,7 @@ void Analysis::EndOfEvent(const G4Event* /*anEvent*/)
             G4cout << "ROOT: files writing  " <<percentOfEvent<<" %"<< G4endl;
             myROOTfile->Write();
 #endif
-            percentOfEvent+=20;
+            percentOfEvent+=10;
         }
     }
 }
